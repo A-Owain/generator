@@ -179,18 +179,24 @@ reader.readAsDataURL(file)
 /* -------- copy HTML ---------- */
 
 async function copyHTML(){
+  const html = buildEmailSafeSignatureHTML();
 
-let html=$("sig").outerHTML
+  const plain = [
+    $("name").value,
+    $("title").value,
+    $("phone").value,
+    $("email").value,
+    $("web").value
+  ].filter(Boolean).join(" | ") || "Signature";
 
-await navigator.clipboard.write([
-new ClipboardItem({
-"text/html":new Blob([html],{type:"text/html"}),
-"text/plain":new Blob([$(`name`).value],{type:"text/plain"})
-})
-])
+  await navigator.clipboard.write([
+    new ClipboardItem({
+      "text/html": new Blob([html], { type: "text/html" }),
+      "text/plain": new Blob([plain], { type: "text/plain" })
+    })
+  ]);
 
-alert("Copied! Paste into email signature settings.")
-
+  alert("Copied (email-safe). Paste into your email signature settings.");
 }
 
 /* -------- copy TEXT ---------- */
@@ -235,6 +241,85 @@ async function downloadPNG() {
   a.href = data;
   a.download = "signature-4k.png";
   a.click();
+}
+
+/* -------- extra -------- */
+
+function buildEmailSafeSignatureHTML(){
+  const name = ($("name").value || "Your Name").trim();
+  const title = ($("title").value || "Your Title").trim();
+  const email = ($("email").value || "").trim();
+  const phone = ($("phone").value || "").trim();
+  const web   = ($("web").value || "").trim();
+
+  const avatarSrc = $("avatar").style.display !== "none" ? ($("avatar").src || "") : "";
+  const initialsText = initials(name || "AA");
+
+  // Email-safe font stack (webfonts may be ignored by Outlook desktop)
+  const font = "Arial, Helvetica, sans-serif";
+  const color = "#02326d";
+  const border = "1px solid #02326d";
+  const radius = "6px";
+
+  const esc = (s) => (s || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#39;");
+
+  const safeUrl = (u) => {
+    if(!u) return "";
+    if(/^https?:\/\//i.test(u)) return u;
+    return "https://" + u;
+  };
+
+  const line = (labelHtml) =>
+    `<tr><td style="padding:0; margin:0; line-height:18px; font-size:13px; color:${color}; font-family:${font};">${labelHtml}</td></tr>`;
+
+  const lines = [];
+  if (email) lines.push(line(`<a href="mailto:${esc(email)}" style="color:${color}; text-decoration:none;">${esc(email)}</a>`));
+  if (phone) lines.push(line(`<a href="tel:${esc(phone.replace(/\s+/g,""))}" style="color:${color}; text-decoration:none;">${esc(phone)}</a>`));
+  if (web)   lines.push(line(`<a href="${esc(safeUrl(web))}" style="color:${color}; text-decoration:none;">${esc(web)}</a>`));
+
+  const avatarBlock = avatarSrc
+    ? `<img src="${esc(avatarSrc)}" width="150" height="150" alt="avatar"
+         style="display:block; width:150px; height:150px; border-radius:${radius}; object-fit:cover; border:0; outline:none; text-decoration:none;">`
+    : `<div style="width:150px;height:150px;border-radius:${radius};background:${color};color:#ffffff;
+                  display:flex;align-items:center;justify-content:center;font-family:${font};font-weight:700;font-size:28px;">
+         ${esc(initialsText)}
+       </div>`;
+
+  // Table-based layout, inline styles only
+  return `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"
+  style="border-collapse:separate;border-spacing:0; border:${border}; border-radius:${radius};
+         font-family:${font}; color:${color};">
+  <tr>
+    <td style="padding:6px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+        <tr>
+          <td valign="top" style="padding:0; margin:0;">
+            ${avatarBlock}
+          </td>
+          <td width="14" style="width:14px; font-size:0; line-height:0;">&nbsp;</td>
+          <td valign="top" style="padding:0; margin:0;">
+            <div style="font-size:17px; font-weight:700; color:${color}; font-family:${font}; line-height:20px;">
+              ${esc(name)}
+            </div>
+            <div style="font-size:13px; font-weight:500; color:${color}; font-family:${font}; line-height:18px; margin-top:2px;">
+              ${esc(title)}
+            </div>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; margin-top:45px;">
+              ${lines.join("")}
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`.trim();
 }
 
 </script>
