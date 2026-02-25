@@ -1,0 +1,243 @@
+.
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Instant Signature Generator</title>
+
+<style>
+body{font-family:'PingAR', Arial, sans-serif;background:#f5f5f5;margin:0;padding:30px}
+.wrap{max-width:1000px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:white;padding:20px;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+input{width:100%;padding:10px;margin-top:6px;margin-bottom:12px;border-radius:6px;border:1px solid #ddd}
+button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:white;cursor:pointer}
+.primary{background:#0a66c2;color:white;border:none}
+
+.sig{display:flex;gap:14px;align-items:center;padding:6px;border:1px solid #02326d;border-radius:6px}
+.avatar{width:150px;height:150px;border-radius:6px;object-fit:cover;background:#eee}
+.initials{width:150px;height:150px;border-radius:6px;background:#02326d;color:white;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+.name{font-weight:700;font-size:17px;color:#02326d;}
+.name{
+  font-family:'PingAR', Arial, sans-serif;
+  font-weight:900;
+}
+.title{color:#02326d;font-size:13px}
+.title{
+  font-family:'PingAR', Arial, sans-serif;
+  font-weight:500;
+}
+.links{font-size:13px;margin-top:45px;color:#02326d}
+.links a{color:#02326d;text-decoration:none;margin-right:10px}
+.links a{display:inline}
+.links{
+  font-family:'PingAR', Arial, sans-serif;
+  font-weight:500;
+}
+
+@font-face{
+  font-family:'PingAR';
+  src:url('./fonts/PingAR+LT-Heavy.otf') format('opentype');
+  font-weight:900;
+}
+
+@font-face{
+  font-family:'PingAR';
+  src:url('./fonts/PingAR-LT-Medium.otf') format('opentype');
+  font-weight:500;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<div class="card">
+<h3>Generator</h3>
+
+<label>Name</label>
+<input id="name">
+
+<label>Title</label>
+<input id="title">
+
+<label>Email</label>
+<input id="email">
+
+<label>Phone</label>
+<input id="phone">
+
+<label>Website</label>
+<input id="web">
+
+<label>Upload Avatar</label>
+<input type="file" id="avatarUpload" accept="image/*">
+
+<br><br>
+
+<button class="primary" onclick="copyHTML()">Copy HTML</button>
+<button onclick="copyText()">Copy Text</button>
+<button onclick="downloadPNG()">Download PNG</button>
+
+</div>
+
+
+<div class="card">
+<h3>Preview</h3>
+
+<div id="sig" class="sig">
+
+<img id="avatar" class="avatar" style="display:none">
+
+<div id="initials" class="initials">AA</div>
+
+<div>
+<div id="pname" class="name">Your Name</div>
+<div id="ptitle" class="title">Your Title</div>
+<div id="plinks" class="links"></div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+
+<script>
+
+const $ = id=>document.getElementById(id)
+
+function initials(n){
+let p=n.trim().split(" ")
+if(!p[0]) return "AA"
+return (p[0][0]+(p[1]?p[1][0]:"")).toUpperCase()
+}
+
+function update(){
+
+$("pname").textContent=$("name").value||"Your Name"
+$("ptitle").textContent=$("title").value||"Your Title"
+
+$("initials").textContent=initials($("name").value||"AA")
+
+let links=[]
+if($("email").value)links.push(`<a>${$("email").value}</a>`)
+if($("phone").value)links.push(`<a>${$("phone").value}</a>`)
+if($("web").value)links.push(`<a>${$("web").value}</a>`)
+
+$("plinks").innerHTML = links.join("<br>")
+
+}
+
+["name","title","phone","email","web"].forEach(id=>{
+$(id).oninput=update
+})
+
+update()
+
+/* -------- avatar upload + resize ---------- */
+
+$("avatarUpload").onchange=e=>{
+
+let file=e.target.files[0]
+if(!file) return
+
+let img=new Image()
+let reader=new FileReader()
+
+reader.onload=ev=>{
+img.src=ev.target.result
+}
+
+img.onload=()=>{
+
+let canvas=document.createElement("canvas")
+let max=256
+let scale=Math.min(max/img.width,max/img.height,1)
+
+canvas.width=img.width*scale
+canvas.height=img.height*scale
+
+canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height)
+
+let data=canvas.toDataURL("image/jpeg",0.85)
+
+$("avatar").src=data
+$("avatar").style.display="block"
+$("initials").style.display="none"
+
+}
+
+reader.readAsDataURL(file)
+
+}
+
+/* -------- copy HTML ---------- */
+
+async function copyHTML(){
+
+let html=$("sig").outerHTML
+
+await navigator.clipboard.write([
+new ClipboardItem({
+"text/html":new Blob([html],{type:"text/html"}),
+"text/plain":new Blob([$(`name`).value],{type:"text/plain"})
+})
+])
+
+alert("Copied! Paste into email signature settings.")
+
+}
+
+/* -------- copy TEXT ---------- */
+
+function copyText(){
+
+let t=[
+$("name").value,
+$("title").value,
+$("phone").value,
+$("email").value,
+$("web").value
+].filter(Boolean).join(" | ")
+
+navigator.clipboard.writeText(t)
+
+alert("Text copied")
+
+}
+
+/* -------- PNG ---------- */
+
+async function downloadPNG() {
+  if (document.fonts) await document.fonts.ready;
+
+  const node = $("sig");
+  const rect = node.getBoundingClientRect();
+
+  const targetWidth = 3840;              // 4K UHD width
+  let ratio = targetWidth / rect.width;  // ensures output width ~= 3840px
+
+  // Safety cap (avoid huge canvases). If your signature is small, 8 is plenty.
+  ratio = Math.min(ratio, 8);
+
+  const data = await htmlToImage.toPng(node, {
+    pixelRatio: ratio,
+    backgroundColor: "#ffffff",
+    cacheBust: true
+  });
+
+  const a = document.createElement("a");
+  a.href = data;
+  a.download = "signature-4k.png";
+  a.click();
+}
+
+</script>
+
+</body>
+</html>
