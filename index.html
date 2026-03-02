@@ -8,13 +8,15 @@
 
 <style>
 body{font-family:'PingAR', Arial, sans-serif;background:#f5f5f5;margin:0;padding:30px}
-.wrap{max-width:1000px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.wrap{
+  max-width:850px;margin:auto;display:flex;flex-direction:column;gap:30px;
+}
 .card{background:white;padding:20px;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
 input{width:100%;padding:10px;margin-top:6px;margin-bottom:12px;border-radius:6px;border:1px solid #ddd}
 button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:white;cursor:pointer}
 .primary{background:#0a66c2;color:white;border:none}
 
-.sig{display:flex;gap:14px;align-items:center;padding:6px;border:1px solid #02326d;border-radius:6px}
+.sig{display:flex;gap:14px;align-items:center;padding:6px;border:1px solid #02326d;border-radius:6px;width:600px;}
 .avatar{width:150px;height:150px;border-radius:6px;object-fit:cover;background:#eee}
 .initials{width:150px;height:150px;border-radius:6px;background:#02326d;color:white;display:flex;align-items:center;justify-content:center;font-weight:700}
 
@@ -34,6 +36,37 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 .links{
   font-family:'PingAR', Arial, sans-serif;
   font-weight:500;
+}
+
+.avatar-choices{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.avatar-choice{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid #ddd;
+  border-radius:6px;
+  padding:6px 8px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.avatar-choice input{
+  width:auto;
+  margin:0;
+}
+
+.avatar-thumb{
+  width:42px;
+  height:42px;
+  border-radius:6px;
+  object-fit:cover;
+  display:block;
+  border:1px solid #eee;
 }
 
 @font-face{
@@ -70,10 +103,14 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 <input id="phone">
 
 <label>Website</label>
-<input id="web">
+<input id="web" value="https://www.alraedah.sa/">
 
 <label>Upload Avatar</label>
 <input type="file" id="avatarUpload" accept="image/*">
+
+<label>Choose a default avatar</label>
+
+<div class="avatar-choices" id="avatarChoices"></div>
 
 <br><br>
 
@@ -184,8 +221,8 @@ async function copyHTML(){
   const plain = [
     $("name").value,
     $("title").value,
-    $("phone").value,
     $("email").value,
+    $("phone").value,
     $("web").value
   ].filter(Boolean).join(" | ") || "Signature";
 
@@ -196,7 +233,7 @@ async function copyHTML(){
     })
   ]);
 
-  alert("Copied (email-safe). Paste into your email signature settings.");
+  alert("Copied (Calibri 12pt email-safe).");
 }
 
 /* -------- copy TEXT ---------- */
@@ -219,47 +256,66 @@ alert("Text copied")
 
 /* -------- PNG ---------- */
 
-async function downloadPNG() {
-  if (document.fonts) await document.fonts.ready;
+async function downloadPNG(){
+  try{
+    if (document.fonts) await document.fonts.ready;
 
-  const node = $("sig");
-  const rect = node.getBoundingClientRect();
+    const node = $("sig");
+    const rect = node.getBoundingClientRect();
 
-  const targetWidth = 3840;              // 4K UHD width
-  let ratio = targetWidth / rect.width;  // ensures output width ~= 3840px
+    // Ensure avatar is fully loaded if visible
+    if ($("avatar").style.display !== "none" && $("avatar").src){
+      try { await $("avatar").decode(); } catch {}
+    }
 
-  // Safety cap (avoid huge canvases). If your signature is small, 8 is plenty.
-  ratio = Math.min(ratio, 8);
+    const targetWidth = 3840;              // 4K width
+    let scale = targetWidth / rect.width;  // scale up to 4K
+    scale = Math.min(scale, 6);            // safety cap to avoid crashes
 
-  const data = await htmlToImage.toPng(node, {
-    pixelRatio: ratio,
-    backgroundColor: "#ffffff",
-    cacheBust: true
-  });
+    const canvas = await html2canvas(node, {
+      backgroundColor: "#ffffff",
+      scale: scale,
+      useCORS: true,
+      allowTaint: true
+    });
 
-  const a = document.createElement("a");
-  a.href = data;
-  a.download = "signature-4k.png";
-  a.click();
+    const data = canvas.toDataURL("image/png");
+
+    const a = document.createElement("a");
+    a.href = data;
+    a.download = "signature-4k.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+  } catch(err){
+    console.error("PNG export failed:", err);
+    alert("PNG export failed. Check Console for details.");
+  }
 }
 
 /* -------- extra -------- */
 
 function buildEmailSafeSignatureHTML(){
-  const name = ($("name").value || "Your Name").trim();
+  const name  = ($("name").value  || "Your Name").trim();
   const title = ($("title").value || "Your Title").trim();
   const email = ($("email").value || "").trim();
   const phone = ($("phone").value || "").trim();
-  const web   = ($("web").value || "").trim();
+  const web   = ($("web").value   || "").trim();
 
-  const avatarSrc = $("avatar").style.display !== "none" ? ($("avatar").src || "") : "";
+  // Use the currently-visible avatar (upload or preset)
+  const avatarSrc = ($("avatar").style.display !== "none" && $("avatar").src) ? $("avatar").src : "";
   const initialsText = initials(name || "AA");
 
-  // Email-safe font stack (webfonts may be ignored by Outlook desktop)
-  const font = "Arial, Helvetica, sans-serif";
-  const color = "#02326d";
-  const border = "1px solid #02326d";
-  const radius = "6px";
+  // REQUIRED by you
+  const FONT_FAMILY = "Calibri, Arial, sans-serif";
+  const BASE_SIZE   = "12pt";
+  const LINE_HEIGHT = "16pt";
+
+  // Your preview colors
+  const COLOR  = "#02326d";
+  const BORDER = `1px solid ${COLOR}`;
+  const RADIUS = "6px";
 
   const esc = (s) => (s || "")
     .replaceAll("&","&amp;")
@@ -274,45 +330,57 @@ function buildEmailSafeSignatureHTML(){
     return "https://" + u;
   };
 
-  const line = (labelHtml) =>
-    `<tr><td style="padding:0; margin:0; line-height:18px; font-size:13px; color:${color}; font-family:${font};">${labelHtml}</td></tr>`;
+  const row = (html) => `
+    <tr>
+      <td style="padding:0;margin:0;font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};">
+        ${html}
+      </td>
+    </tr>`.trim();
 
-  const lines = [];
-  if (email) lines.push(line(`<a href="mailto:${esc(email)}" style="color:${color}; text-decoration:none;">${esc(email)}</a>`));
-  if (phone) lines.push(line(`<a href="tel:${esc(phone.replace(/\s+/g,""))}" style="color:${color}; text-decoration:none;">${esc(phone)}</a>`));
-  if (web)   lines.push(line(`<a href="${esc(safeUrl(web))}" style="color:${color}; text-decoration:none;">${esc(web)}</a>`));
+  const contactRows = [];
+  if (email) contactRows.push(row(`<a href="mailto:${esc(email)}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(email)}</a>`));
+  if (phone) contactRows.push(row(`<a href="tel:${esc(phone.replace(/\s+/g,""))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(phone)}</a>`));
+  if (web)   contactRows.push(row(`<a href="${esc(safeUrl(web))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(web)}</a>`));
 
+  // Avatar: prefer embedded/base64 (best for email). If it’s not base64, it may still paste, but some clients block.
   const avatarBlock = avatarSrc
     ? `<img src="${esc(avatarSrc)}" width="150" height="150" alt="avatar"
-         style="display:block; width:150px; height:150px; border-radius:${radius}; object-fit:cover; border:0; outline:none; text-decoration:none;">`
-    : `<div style="width:150px;height:150px;border-radius:${radius};background:${color};color:#ffffff;
-                  display:flex;align-items:center;justify-content:center;font-family:${font};font-weight:700;font-size:28px;">
+         style="display:block;width:150px;height:150px;border-radius:${RADIUS};object-fit:cover;border:0;outline:none;text-decoration:none;">`
+    : `<div style="width:150px;height:150px;border-radius:${RADIUS};background:${COLOR};color:#ffffff;
+                  font-family:${FONT_FAMILY};font-size:20pt;line-height:150px;text-align:center;font-weight:700;">
          ${esc(initialsText)}
        </div>`;
 
-  // Table-based layout, inline styles only
+  // NOTE: margin-top is unreliable in email. Use a spacer row for your 45px gap.
+  // We’ll approximate your preview with a fixed spacer (e.g., 24px). You can change SPACER_PX to 45, but some clients compress it.
+  const SPACER_PX = 24;
+
   return `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"
-  style="border-collapse:separate;border-spacing:0; border:${border}; border-radius:${radius};
-         font-family:${font}; color:${color};">
+  style="border-collapse:separate;border-spacing:0;border:${BORDER};border-radius:${RADIUS};
+         font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};">
   <tr>
     <td style="padding:6px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
         <tr>
-          <td valign="top" style="padding:0; margin:0;">
+          <td valign="top" style="padding:0;margin:0;">
             ${avatarBlock}
           </td>
-          <td width="14" style="width:14px; font-size:0; line-height:0;">&nbsp;</td>
-          <td valign="top" style="padding:0; margin:0;">
-            <div style="font-size:17px; font-weight:700; color:${color}; font-family:${font}; line-height:20px;">
+          <td width="14" style="width:14px;font-size:0;line-height:0;">&nbsp;</td>
+          <td valign="top" style="padding:0;margin:0;font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};">
+            <div style="font-family:${FONT_FAMILY};font-size:14pt;line-height:18pt;font-weight:700;color:${COLOR};">
               ${esc(name)}
             </div>
-            <div style="font-size:13px; font-weight:500; color:${color}; font-family:${font}; line-height:18px; margin-top:2px;">
+            <div style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};font-weight:400;color:${COLOR};">
               ${esc(title)}
             </div>
 
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; margin-top:45px;">
-              ${lines.join("")}
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+              <tr><td style="height:${SPACER_PX}px;line-height:${SPACER_PX}px;font-size:0;">&nbsp;</td></tr>
+            </table>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+              ${contactRows.join("")}
             </table>
           </td>
         </tr>
@@ -322,7 +390,83 @@ function buildEmailSafeSignatureHTML(){
 </table>`.trim();
 }
 
+/*------*/
+
+// ===== Default avatars (edit filenames to match yours) =====
+const DEFAULT_AVATARS = [
+  "./images/darkemb.png",
+  "./images/darkfull.png",
+  "./images/lightemb.png",
+  "./images/lightfull.png"
+];
+
+// Convert an image URL to base64 data URL (so copy/paste email works)
+async function urlToDataURL(url){
+  const res = await fetch(url, { cache: "no-store" });
+  const blob = await res.blob();
+  return await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+}
+
+function applyAvatarDataUrl(dataUrl){
+  $("avatar").src = dataUrl;
+  $("avatar").style.display = "block";
+  $("initials").style.display = "none";
+
+  document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
+}
+
+// Reset to initials
+function resetAvatar(){
+  $("avatar").src = "";
+  $("avatar").style.display = "none";
+  $("initials").style.display = "flex";
+  // also uncheck radios
+  document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
+}
+
+// Render radio choices
+async function initDefaultAvatars(){
+  const wrap = $("avatarChoices");
+  wrap.innerHTML = "";
+
+  // Preload + convert to data URLs once (fast after first load)
+  const dataUrls = await Promise.all(DEFAULT_AVATARS.map(urlToDataURL));
+
+  dataUrls.forEach((dataUrl, idx) => {
+    const id = `preset_${idx}`;
+
+    const label = document.createElement("label");
+    label.className = "avatar-choice";
+    label.setAttribute("for", id);
+
+    label.innerHTML = `
+      <input type="radio" name="presetAvatar" id="${id}">
+      <img class="avatar-thumb" src="${dataUrl}" alt="avatar ${idx+1}">
+      <span>Avatar ${idx+1}</span>
+    `;
+
+    // When selected, apply avatar
+    label.querySelector("input").addEventListener("change", () => {
+      applyAvatarDataUrl(dataUrl);
+    });
+
+    wrap.appendChild(label);
+  });
+}
+
+// Call this once on page load
+initDefaultAvatars().catch(console.error);
+
+/*----*/
+
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 </body>
 </html>
