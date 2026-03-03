@@ -1,4 +1,3 @@
-.
 <!doctype html>
 <html>
 <head>
@@ -57,6 +56,48 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 .avatar-choice input{width:auto;margin:0;}
 .avatar-thumb{width:42px;height:42px;border-radius:6px;object-fit:cover;display:block;border:1px solid #eee;}
 
+/* ---------- Cropper UI ---------- */
+.cropModal{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  align-items:center; justify-content:center;
+  padding:18px;
+  z-index:9999;
+}
+.cropBox{
+  background:#fff;
+  width:min(920px, 96vw);
+  border-radius:10px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);
+  padding:14px;
+}
+.cropTop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.cropTop h4{margin:0;font-size:16px;color:#02326d}
+.cropStage{
+  background:#f5f5f5;
+  border:1px solid #ddd;
+  border-radius:10px;
+  height:min(520px, 62vh);
+  width:min(520px, 62vh);
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+  position:relative;
+}
+.cropCanvas{
+  width:100%;
+  height:100%;
+  display:block;
+}
+.cropTools{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  margin-top:12px;
+}
+.cropTools label{font-size:13px;color:#02326d}
+.cropTools input[type="range"]{width:220px}
+.cropHint{font-size:12px;color:#666;margin-top:6px}
+.cropBtns{display:flex; gap:10px; justify-content:flex-end; margin-top:12px;}
+
 @font-face{
   font-family:'PingAR';
   src:url('./fonts/PingAR+LT-Heavy.otf') format('opentype');
@@ -92,7 +133,7 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
     <label>Website</label>
     <input id="web" value="https://www.alraedah.sa">
 
-    <label>Upload Avatar</label>
+    <label>Upload Avatar (with crop)</label>
     <input type="file" id="avatarUpload" accept="image/*">
 
     <label>Choose a default avatar</label>
@@ -131,7 +172,7 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
       </div>
     </div>
 
-    <!-- Arabic (✅ DOM ORDER swapped: text FIRST, avatar SECOND => avatar RIGHT always) -->
+    <!-- Arabic (DOM order swapped => avatar RIGHT always) -->
     <div id="sigAR" class="sig" style="display:none">
       <div class="textwrap">
         <div id="pnameAR" class="name">اسمك</div>
@@ -147,6 +188,39 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 
   </div>
 
+</div>
+
+<!-- ---------- Cropper Modal ---------- -->
+<div class="cropModal" id="cropModal" aria-hidden="true">
+  <div class="cropBox">
+    <div class="cropTop">
+      <h4>Crop avatar (square)</h4>
+      <button type="button" onclick="closeCropper()">Close</button>
+    </div>
+
+    <div class="cropStage">
+      <canvas id="cropCanvas" class="cropCanvas"></canvas>
+    </div>
+
+    <div class="cropTools">
+      <label>Zoom</label>
+      <input id="zoomRange" type="range" min="0" max="4" step="0.01" value="1">
+      <label>Rotate</label>
+      <input id="rotRange" type="range" min="-180" max="180" step="1" value="0">
+      <label style="display:flex;gap:8px;align-items:center;">
+        <input id="mirrorX" type="checkbox"> Mirror
+      </label>
+    </div>
+
+    <div class="cropHint">
+      Drag the image to reposition. Use mouse wheel / trackpad to zoom. Output is 256×256 (good for email copy + PNG).
+    </div>
+
+    <div class="cropBtns">
+      <button type="button" onclick="resetCropper()">Reset</button>
+      <button type="button" class="primary" onclick="applyCroppedAvatar()">Apply Crop</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -186,7 +260,7 @@ function update(){
   $("ptitleEN").textContent = title || "Your Title";
   $("initialsEN").textContent = initials(name || "AA");
 
-  // AR (same inputs, RTL text)
+  // AR
   $("pnameAR").textContent = name || "اسمك";
   $("ptitleAR").textContent = title || "مسمى وظيفتك";
   $("initialsAR").textContent = initials(name || "AA");
@@ -201,7 +275,7 @@ function update(){
 }
 
 ["name","title","phone","email","web"].forEach(id => {
-  $(id).oninput = update;
+  $(id).oninput = update
 });
 update();
 
@@ -228,34 +302,243 @@ function resetAvatar(){
   document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
 }
 
-/* ---------- Upload avatar + resize ---------- */
+/* ============================================================
+   CROPPER (no external libs): square crop, drag + zoom + rotate
+   ============================================================ */
+const cropModal = $("cropModal");
+const cropCanvas = $("cropCanvas");
+const cctx = cropCanvas.getContext("2d");
+
+let cropImg = new Image();
+let cropState = {
+  imgLoaded:false,
+  scale:1,
+  rotate:0,     // radians
+  mirror:false,
+  cx:0, cy:0,   // image center position in canvas coords
+  dragging:false,
+  lastX:0, lastY:0
+};
+
+// fixed output and view
+const CROP_OUTPUT = 256;     // final avatar size (email friendly)
+const VIEW_SIZE = 800;       // internal canvas pixel size for crisp dragging
+
+function openCropper(dataUrl){
+  cropModal.style.display = "flex";
+  cropModal.setAttribute("aria-hidden","false");
+
+  // size the canvas for crispness (independent from CSS size)
+  cropCanvas.width = VIEW_SIZE;
+  cropCanvas.height = VIEW_SIZE;
+
+  cropImg = new Image();
+  cropImg.onload = () => {
+    cropState.imgLoaded = true;
+
+    // start centered
+    cropState.scale = 1;
+    cropState.rotate = 0;
+    cropState.mirror = false;
+
+    cropState.cx = cropCanvas.width/2;
+    cropState.cy = cropCanvas.height/2;
+
+    // fit image so it covers the crop square initially
+    const minSide = Math.min(cropImg.width, cropImg.height);
+    const coverScale = CROP_OUTPUT / minSide; // base cover at output size
+    // Because our view canvas is bigger, scale up to match view
+    const viewCover = (VIEW_SIZE / CROP_OUTPUT) * coverScale;
+    cropState.scale = viewCover;
+
+    $("zoomRange").value = Math.min(4, Math.max(1, cropState.scale));
+    $("rotRange").value = 0;
+    $("mirrorX").checked = false;
+
+    drawCropper();
+  };
+  cropImg.src = dataUrl;
+}
+
+function closeCropper(){
+  cropModal.style.display = "none";
+  cropModal.setAttribute("aria-hidden","true");
+  cropState.dragging = false;
+}
+
+function resetCropper(){
+  if(!cropState.imgLoaded) return;
+  cropState.cx = cropCanvas.width/2;
+  cropState.cy = cropCanvas.height/2;
+  cropState.rotate = 0;
+  cropState.mirror = false;
+
+  const minSide = Math.min(cropImg.width, cropImg.height);
+  const coverScale = CROP_OUTPUT / minSide;
+  cropState.scale = (VIEW_SIZE / CROP_OUTPUT) * coverScale;
+
+  $("zoomRange").value = Math.min(4, Math.max(1, cropState.scale));
+  $("rotRange").value = 0;
+  $("mirrorX").checked = false;
+
+  drawCropper();
+}
+
+function drawCropper(){
+  const w = cropCanvas.width, h = cropCanvas.height;
+  cctx.clearRect(0,0,w,h);
+
+  // background
+  cctx.fillStyle = "#f5f5f5";
+  cctx.fillRect(0,0,w,h);
+
+  if(!cropState.imgLoaded) return;
+
+  // draw image with transforms
+  cctx.save();
+  cctx.translate(cropState.cx, cropState.cy);
+  cctx.rotate(cropState.rotate);
+  cctx.scale(cropState.mirror ? -cropState.scale : cropState.scale, cropState.scale);
+  cctx.imageSmoothingEnabled = true;
+  cctx.imageSmoothingQuality = "high";
+  cctx.drawImage(cropImg, -cropImg.width/2, -cropImg.height/2);
+  cctx.restore();
+
+  // overlay + square crop window (center)
+  const cropSize = CROP_OUTPUT * (VIEW_SIZE / CROP_OUTPUT); // equals VIEW_SIZE? no, we want actual crop window size in view:
+  const windowSize = Math.min(w,h) * 0.62; // nice UI window
+  const x = (w-windowSize)/2;
+  const y = (h-windowSize)/2;
+
+  // dark overlay
+  cctx.save();
+  cctx.fillStyle = "rgba(0,0,0,0.45)";
+  cctx.fillRect(0,0,w,h);
+
+  // cut the hole
+  cctx.globalCompositeOperation = "destination-out";
+  cctx.fillRect(x,y,windowSize,windowSize);
+  cctx.restore();
+
+  // border
+  cctx.save();
+  cctx.strokeStyle = "#ffffff";
+  cctx.lineWidth = 2;
+  cctx.strokeRect(x+1,y+1,windowSize-2,windowSize-2);
+  cctx.restore();
+
+  // guide text (optional)
+  // cctx.fillStyle="#fff"; cctx.font="14px Arial"; cctx.fillText("Drag to position", x, y-10);
+
+  // store window rect for extraction
+  cropState.window = {x,y,size:windowSize};
+}
+
+/* drag controls */
+cropCanvas.addEventListener("mousedown", (e)=>{
+  if(!cropState.imgLoaded) return;
+  cropState.dragging = true;
+  cropState.lastX = e.offsetX;
+  cropState.lastY = e.offsetY;
+});
+window.addEventListener("mouseup", ()=> cropState.dragging = false);
+cropCanvas.addEventListener("mousemove", (e)=>{
+  if(!cropState.dragging) return;
+  const dx = e.offsetX - cropState.lastX;
+  const dy = e.offsetY - cropState.lastY;
+  cropState.lastX = e.offsetX;
+  cropState.lastY = e.offsetY;
+  cropState.cx += dx;
+  cropState.cy += dy;
+  drawCropper();
+});
+
+/* zoom wheel */
+cropCanvas.addEventListener("wheel", (e)=>{
+  if(!cropState.imgLoaded) return;
+  e.preventDefault();
+  const delta = Math.sign(e.deltaY);
+  const factor = (delta > 0) ? 0.96 : 1.04;
+  cropState.scale = Math.min(4, Math.max(0.4, cropState.scale * factor));
+  $("zoomRange").value = cropState.scale;
+  drawCropper();
+}, {passive:false});
+
+/* sliders */
+$("zoomRange").addEventListener("input", (e)=>{
+  cropState.scale = parseFloat(e.target.value);
+  drawCropper();
+});
+$("rotRange").addEventListener("input", (e)=>{
+  const deg = parseFloat(e.target.value);
+  cropState.rotate = deg * Math.PI / 180;
+  drawCropper();
+});
+$("mirrorX").addEventListener("change", (e)=>{
+  cropState.mirror = e.target.checked;
+  drawCropper();
+});
+
+/* extract cropped square to 256x256 dataURL */
+function applyCroppedAvatar(){
+  if(!cropState.imgLoaded) return;
+
+  // create output canvas
+  const out = document.createElement("canvas");
+  out.width = CROP_OUTPUT;
+  out.height = CROP_OUTPUT;
+  const octx = out.getContext("2d");
+
+  // compute mapping: take crop window from view canvas and scale into output
+  const {x,y,size} = cropState.window;
+
+  // First, render current view to an offscreen canvas (exactly as cropCanvas drawn, but without overlay)
+  const raw = document.createElement("canvas");
+  raw.width = cropCanvas.width;
+  raw.height = cropCanvas.height;
+  const rctx = raw.getContext("2d");
+
+  // draw background (optional white)
+  rctx.fillStyle = "#ffffff";
+  rctx.fillRect(0,0,raw.width,raw.height);
+
+  // draw transformed image
+  rctx.save();
+  rctx.translate(cropState.cx, cropState.cy);
+  rctx.rotate(cropState.rotate);
+  rctx.scale(cropState.mirror ? -cropState.scale : cropState.scale, cropState.scale);
+  rctx.imageSmoothingEnabled = true;
+  rctx.imageSmoothingQuality = "high";
+  rctx.drawImage(cropImg, -cropImg.width/2, -cropImg.height/2);
+  rctx.restore();
+
+  // copy the crop window area into output canvas
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = "high";
+  octx.drawImage(raw, x, y, size, size, 0, 0, CROP_OUTPUT, CROP_OUTPUT);
+
+  const dataUrl = out.toDataURL("image/jpeg", 0.9);
+  applyAvatarToBoth(dataUrl);
+
+  // upload overrides preset selection
+  document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
+
+  closeCropper();
+}
+
+/* ---------- Upload avatar => open cropper ---------- */
 $("avatarUpload").onchange = e => {
   let file = e.target.files && e.target.files[0];
   if(!file) return;
 
-  let img = new Image();
-  let reader = new FileReader();
-
-  reader.onload = ev => { img.src = ev.target.result; };
-
-  img.onload = () => {
-    let canvas = document.createElement("canvas");
-    let max = 256;
-    let scale = Math.min(max / img.width, max / img.height, 1);
-
-    canvas.width = img.width * scale;
-    canvas.height = img.height * scale;
-
-    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    let data = canvas.toDataURL("image/jpeg", 0.85);
-    applyAvatarToBoth(data);
-
-    // upload overrides preset selection
-    document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
+  const reader = new FileReader();
+  reader.onload = ev => {
+    openCropper(ev.target.result);
   };
-
   reader.readAsDataURL(file);
+
+  // allow re-upload same file triggers again
+  e.target.value = "";
 };
 
 /* ---------- Copy TEXT ---------- */
@@ -306,7 +589,6 @@ async function downloadPNG(){
 }
 
 /* ---------- Email-safe builders (Calibri 12pt) ---------- */
-/* NOTE: email-safe HTML does NOT use grid/flex; it uses tables */
 function buildEmailSafeSignatureHTML_EN(){ return buildEmailSafeCore(false); }
 function buildEmailSafeSignatureHTML_AR(){ return buildEmailSafeCore(true); }
 
@@ -375,16 +657,15 @@ function buildEmailSafeCore(isAR){
   const avatarCell = `<td valign="top" style="padding:0;margin:0;" align="right">${avatarBlock}</td>`;
   const gapCell = `<td width="14" style="width:14px;font-size:0;line-height:0;">&nbsp;</td>`;
 
-  // ✅ Always stable: outer table forced LTR, and Arabic uses (text then avatar) => avatar RIGHT
   const innerRow = isAR
-    ? `${textCell}${gapCell}${avatarCell}`  // AR: avatar right
-    : `${avatarCell}${gapCell}${textCell}`; // EN: avatar left
+    ? `${textCell}${gapCell}${avatarCell}`   // AR: avatar right
+    : `${avatarCell}${gapCell}${textCell}`;  // EN: avatar left
 
-  const FRAME_W = 600;      // match your preview width
+  const FRAME_W = 600;
   const PAD = 6;
-  const INNER_W = FRAME_W - (PAD*2); // 600 - 12 = 588
+  const INNER_W = FRAME_W - (PAD*2);
 
-return `
+  return `
 <table dir="ltr" role="presentation" cellpadding="0" cellspacing="0" border="0" width="${FRAME_W}"
   style="width:${FRAME_W}px;max-width:${FRAME_W}px;direction:ltr;border-collapse:separate;border-spacing:0;
          border:${BORDER};border-radius:${RADIUS};
