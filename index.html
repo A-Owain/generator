@@ -5,77 +5,63 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Instant Signature Generator</title>
-<link rel="icon" type="image/x-icon" href="/images/darkemb.png">
+<link rel="icon" type="image/x-icon" href="./images/darkemb.png">
 
 <style>
 body{font-family:'PingAR', Arial, sans-serif;background:#f5f5f5;margin:0;padding:30px}
-.wrap{
-  max-width:850px;margin:auto;display:flex;flex-direction:column;gap:30px;
-}
+.wrap{max-width:850px;margin:auto;display:flex;flex-direction:column;gap:30px;}
 .card{background:white;padding:20px;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
 input{width:100%;padding:10px;margin-top:6px;margin-bottom:12px;border-radius:6px;border:1px solid #ddd}
 button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:white;cursor:pointer}
 .primary{background:#0a66c2;color:white;border:none}
 
-.sig{display:flex;gap:14px;align-items:center;padding:6px;border:1px solid #02326d;border-radius:6px;width:600px;}
-.avatar{width:150px;height:150px;border-radius:6px;object-fit:cover;background:#eee}
+.langbar{display:flex;gap:10px;margin-bottom:12px;}
+.langbar button{padding:8px 12px;border-radius:6px;border:1px solid #ddd;background:#fff}
+.langbar .primary{border:none}
+
+/* ✅ Use GRID instead of FLEX to guarantee column placement */
+.sig{
+  display:grid;
+  grid-template-columns:150px 1fr; /* EN: avatar left */
+  gap:14px;
+  align-items:center;
+  padding:6px;
+  border:1px solid #02326d;
+  border-radius:6px;
+  width:600px;
+}
+
+#sigAR{
+  grid-template-columns:1fr 150px; /* AR: avatar right */
+  text-align:right;
+}
+
+.avatarwrap{
+  width:150px;height:150px;
+  display:flex;align-items:center;justify-content:center;
+}
+.avatar{width:150px;height:150px;border-radius:6px;object-fit:cover;background:#eee;display:block}
 .initials{width:150px;height:150px;border-radius:6px;background:#02326d;color:white;display:flex;align-items:center;justify-content:center;font-weight:700}
 
-.name{font-weight:700;font-size:17px;color:#02326d;}
-.name{
-  font-family:'PingAR', Arial, sans-serif;
-  font-weight:900;
-}
-.title{color:#02326d;font-size:13px}
-.title{
-  font-family:'PingAR', Arial, sans-serif;
-  font-weight:500;
-}
-.links{font-size:13px;margin-top:45px;color:#02326d}
-.links a{color:#02326d;text-decoration:none;margin-right:10px}
-.links a{display:inline}
-.links{
-  font-family:'PingAR', Arial, sans-serif;
-  font-weight:500;
-}
+.textwrap{min-width:0;}
+#sigAR .textwrap{direction:rtl;text-align:right;}
 
-.avatar-choices{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
+.name{font-size:17px;color:#02326d;font-family:'PingAR', Arial, sans-serif;font-weight:900;}
+.title{color:#02326d;font-size:13px;font-family:'PingAR', Arial, sans-serif;font-weight:500;}
+.links{font-size:13px;margin-top:45px;color:#02326d;font-family:'PingAR', Arial, sans-serif;font-weight:500;}
+.links a{color:#02326d;text-decoration:none;display:inline;overflow-wrap:anywhere}
+#sigAR .links{text-align:right;}
 
-.avatar-choice{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  border:1px solid #ddd;
-  border-radius:6px;
-  padding:6px 8px;
-  cursor:pointer;
-  user-select:none;
-}
-
-.avatar-choice input{
-  width:auto;
-  margin:0;
-}
-
-.avatar-thumb{
-  width:42px;
-  height:42px;
-  border-radius:6px;
-  object-fit:cover;
-  display:block;
-  border:1px solid #eee;
-}
+.avatar-choices{display:flex;gap:10px;flex-wrap:wrap;}
+.avatar-choice{display:flex;align-items:center;gap:8px;border:1px solid #ddd;border-radius:6px;padding:6px 8px;cursor:pointer;user-select:none;}
+.avatar-choice input{width:auto;margin:0;}
+.avatar-thumb{width:42px;height:42px;border-radius:6px;object-fit:cover;display:block;border:1px solid #eee;}
 
 @font-face{
   font-family:'PingAR';
   src:url('./fonts/PingAR+LT-Heavy.otf') format('opentype');
   font-weight:900;
 }
-
 @font-face{
   font-family:'PingAR';
   src:url('./fonts/PingAR-LT-Medium.otf') format('opentype');
@@ -88,203 +74,227 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 
 <div class="wrap">
 
-<div class="card">
-<h3>Generator</h3>
+  <div class="card">
+    <h3>Generator</h3>
 
-<label>Name</label>
-<input id="name">
+    <label>Name</label>
+    <input id="name">
 
-<label>Title</label>
-<input id="title">
+    <label>Title</label>
+    <input id="title">
 
-<label>Email</label>
-<input id="email">
+    <label>Email</label>
+    <input id="email">
 
-<label>Phone</label>
-<input id="phone">
+    <label>Phone</label>
+    <input id="phone">
 
-<label>Website</label>
-<input id="web" value="https://www.alraedah.sa/">
+    <label>Website</label>
+    <input id="web" value="https://www.alraedah.sa">
 
-<label>Upload Avatar</label>
-<input type="file" id="avatarUpload" accept="image/*">
+    <label>Upload Avatar</label>
+    <input type="file" id="avatarUpload" accept="image/*">
 
-<label>Choose a default avatar</label>
+    <label>Choose a default avatar</label>
+    <div class="avatar-choices" id="avatarChoices"></div>
 
-<div class="avatar-choices" id="avatarChoices"></div>
+    <div style="margin-top:10px;">
+      <button type="button" onclick="resetAvatar()">Use Initials</button>
+    </div>
 
-<br><br>
+    <br>
 
-<button class="primary" onclick="copyHTML()">Copy HTML</button>
-<button onclick="copyText()">Copy Text</button>
-<button onclick="downloadPNG()">Download PNG</button>
+    <button class="primary" onclick="copyHTML()">Copy HTML</button>
+    <button onclick="copyText()">Copy Text</button>
+    <button onclick="downloadPNG()">Download PNG</button>
+  </div>
+
+  <div class="card">
+    <h3>Preview</h3>
+
+    <div class="langbar">
+      <button type="button" id="btnEN" class="primary">English</button>
+      <button type="button" id="btnAR">Arabic</button>
+    </div>
+
+    <!-- English (avatar LEFT by grid columns) -->
+    <div id="sigEN" class="sig">
+      <div class="avatarwrap">
+        <img id="avatarEN" class="avatar" style="display:none" alt="avatar">
+        <div id="initialsEN" class="initials">AA</div>
+      </div>
+
+      <div class="textwrap">
+        <div id="pnameEN" class="name">Your Name</div>
+        <div id="ptitleEN" class="title">Your Title</div>
+        <div id="plinksEN" class="links"></div>
+      </div>
+    </div>
+
+    <!-- Arabic (✅ DOM ORDER swapped: text FIRST, avatar SECOND => avatar RIGHT always) -->
+    <div id="sigAR" class="sig" style="display:none">
+      <div class="textwrap">
+        <div id="pnameAR" class="name">اسمك</div>
+        <div id="ptitleAR" class="title">مسمى وظيفتك</div>
+        <div id="plinksAR" class="links"></div>
+      </div>
+
+      <div class="avatarwrap">
+        <img id="avatarAR" class="avatar" style="display:none" alt="avatar">
+        <div id="initialsAR" class="initials">AA</div>
+      </div>
+    </div>
+
+  </div>
 
 </div>
 
-
-<div class="card">
-<h3>Preview</h3>
-
-<div id="sig" class="sig">
-
-<img id="avatar" class="avatar" style="display:none">
-
-<div id="initials" class="initials">AA</div>
-
-<div>
-<div id="pname" class="name">Your Name</div>
-<div id="ptitle" class="title">Your Title</div>
-<div id="plinks" class="links"></div>
-</div>
-
-</div>
-
-</div>
-</div>
-
-
-<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
+const $ = id => document.getElementById(id);
+let currentLang = "EN";
 
-const $ = id=>document.getElementById(id)
+/* ---------- Language toggle ---------- */
+function setLang(lang){
+  currentLang = lang;
+  $("sigEN").style.display = (lang === "EN") ? "grid" : "none";
+  $("sigAR").style.display = (lang === "AR") ? "grid" : "none";
+  $("btnEN").className = (lang === "EN") ? "primary" : "";
+  $("btnAR").className = (lang === "AR") ? "primary" : "";
+}
+$("btnEN").addEventListener("click", () => setLang("EN"));
+$("btnAR").addEventListener("click", () => setLang("AR"));
+setLang("EN");
 
+/* ---------- Helpers ---------- */
 function initials(n){
-let p=n.trim().split(" ")
-if(!p[0]) return "AA"
-return (p[0][0]+(p[1]?p[1][0]:"")).toUpperCase()
+  let p = (n || "").trim().split(" ");
+  if(!p[0]) return "AA";
+  return (p[0][0] + (p[1] ? p[1][0] : "")).toUpperCase();
 }
 
 function update(){
+  const name  = $("name").value || "Your Name";
+  const title = $("title").value || "Your Title";
+  const email = $("email").value.trim();
+  const phone = $("phone").value.trim();
+  const web   = $("web").value.trim();
 
-$("pname").textContent=$("name").value||"Your Name"
-$("ptitle").textContent=$("title").value||"Your Title"
+  // EN
+  $("pnameEN").textContent = name || "Your Name";
+  $("ptitleEN").textContent = title || "Your Title";
+  $("initialsEN").textContent = initials(name || "AA");
 
-$("initials").textContent=initials($("name").value||"AA")
+  // AR (same inputs, RTL text)
+  $("pnameAR").textContent = name || "اسمك";
+  $("ptitleAR").textContent = title || "مسمى وظيفتك";
+  $("initialsAR").textContent = initials(name || "AA");
 
-let links=[]
-if($("email").value)links.push(`<a>${$("email").value}</a>`)
-if($("phone").value)links.push(`<a>${$("phone").value}</a>`)
-if($("web").value)links.push(`<a>${$("web").value}</a>`)
+  const links = [];
+  if(email) links.push(`<a>${email}</a>`);
+  if(phone) links.push(`<a>${phone}</a>`);
+  if(web)   links.push(`<a>${web}</a>`);
 
-$("plinks").innerHTML = links.join("<br>")
-
+  $("plinksEN").innerHTML = links.join("<br>");
+  $("plinksAR").innerHTML = links.join("<br>");
 }
 
-["name","title","phone","email","web"].forEach(id=>{
-$(id).oninput=update
-})
+["name","title","phone","email","web"].forEach(id => {
+  $(id).oninput = update;
+});
+update();
 
-update()
+/* ---------- Avatar apply/reset (BOTH) ---------- */
+function applyAvatarToBoth(dataUrl){
+  $("avatarEN").src = dataUrl;
+  $("avatarEN").style.display = "block";
+  $("initialsEN").style.display = "none";
 
-/* -------- avatar upload + resize ---------- */
-
-$("avatarUpload").onchange=e=>{
-
-let file=e.target.files[0]
-if(!file) return
-
-let img=new Image()
-let reader=new FileReader()
-
-reader.onload=ev=>{
-img.src=ev.target.result
+  $("avatarAR").src = dataUrl;
+  $("avatarAR").style.display = "block";
+  $("initialsAR").style.display = "none";
 }
 
-img.onload=()=>{
+function resetAvatar(){
+  $("avatarEN").src = "";
+  $("avatarEN").style.display = "none";
+  $("initialsEN").style.display = "flex";
 
-let canvas=document.createElement("canvas")
-let max=256
-let scale=Math.min(max/img.width,max/img.height,1)
+  $("avatarAR").src = "";
+  $("avatarAR").style.display = "none";
+  $("initialsAR").style.display = "flex";
 
-canvas.width=img.width*scale
-canvas.height=img.height*scale
-
-canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height)
-
-let data=canvas.toDataURL("image/jpeg",0.85)
-
-$("avatar").src=data
-$("avatar").style.display="block"
-$("initials").style.display="none"
-
+  document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
 }
 
-reader.readAsDataURL(file)
+/* ---------- Upload avatar + resize ---------- */
+$("avatarUpload").onchange = e => {
+  let file = e.target.files && e.target.files[0];
+  if(!file) return;
 
-}
+  let img = new Image();
+  let reader = new FileReader();
 
-/* -------- copy HTML ---------- */
+  reader.onload = ev => { img.src = ev.target.result; };
 
-async function copyHTML(){
-  const html = buildEmailSafeSignatureHTML();
+  img.onload = () => {
+    let canvas = document.createElement("canvas");
+    let max = 256;
+    let scale = Math.min(max / img.width, max / img.height, 1);
 
-  const plain = [
-    $("name").value,
-    $("title").value,
-    $("email").value,
-    $("phone").value,
-    $("web").value
-  ].filter(Boolean).join(" | ") || "Signature";
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
 
-  await navigator.clipboard.write([
-    new ClipboardItem({
-      "text/html": new Blob([html], { type: "text/html" }),
-      "text/plain": new Blob([plain], { type: "text/plain" })
-    })
-  ]);
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
 
-  alert("Copied (Calibri 12pt email-safe).");
-}
+    let data = canvas.toDataURL("image/jpeg", 0.85);
+    applyAvatarToBoth(data);
 
-/* -------- copy TEXT ---------- */
+    // upload overrides preset selection
+    document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
+  };
 
+  reader.readAsDataURL(file);
+};
+
+/* ---------- Copy TEXT ---------- */
 function copyText(){
-
-let t=[
-$("name").value,
-$("title").value,
-$("phone").value,
-$("email").value,
-$("web").value
-].filter(Boolean).join(" | ")
-
-navigator.clipboard.writeText(t)
-
-alert("Text copied")
-
+  let t = [
+    $("name").value, $("title").value, $("phone").value, $("email").value, $("web").value
+  ].filter(Boolean).join(" | ");
+  navigator.clipboard.writeText(t);
+  alert("Text copied");
 }
 
-/* -------- PNG ---------- */
-
+/* ---------- PNG export (selected language) ---------- */
 async function downloadPNG(){
   try{
     if (document.fonts) await document.fonts.ready;
 
-    const node = $("sig");
+    const node = (currentLang === "AR") ? $("sigAR") : $("sigEN");
     const rect = node.getBoundingClientRect();
 
-    // Ensure avatar is fully loaded if visible
-    if ($("avatar").style.display !== "none" && $("avatar").src){
-      try { await $("avatar").decode(); } catch {}
+    const av = (currentLang === "AR") ? $("avatarAR") : $("avatarEN");
+    if (av && av.style.display !== "none" && av.src){
+      try { await av.decode(); } catch {}
     }
 
-    const targetWidth = 3840;              // 4K width
-    let scale = targetWidth / rect.width;  // scale up to 4K
-    scale = Math.min(scale, 6);            // safety cap to avoid crashes
+    const targetWidth = 3840;
+    let scale = targetWidth / rect.width;
+    scale = Math.min(scale, 6);
 
     const canvas = await html2canvas(node, {
-      backgroundColor: "#ffffff",
+      backgroundColor:"#ffffff",
       scale: scale,
       useCORS: true,
       allowTaint: true
     });
 
     const data = canvas.toDataURL("image/png");
-
     const a = document.createElement("a");
     a.href = data;
-    a.download = "signature-4k.png";
+    a.download = `signature-${currentLang.toLowerCase()}-4k.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -295,55 +305,48 @@ async function downloadPNG(){
   }
 }
 
-/* -------- extra -------- */
+/* ---------- Email-safe builders (Calibri 12pt) ---------- */
+/* NOTE: email-safe HTML does NOT use grid/flex; it uses tables */
+function buildEmailSafeSignatureHTML_EN(){ return buildEmailSafeCore(false); }
+function buildEmailSafeSignatureHTML_AR(){ return buildEmailSafeCore(true); }
 
-function buildEmailSafeSignatureHTML(){
-  const name  = ($("name").value  || "Your Name").trim();
-  const title = ($("title").value || "Your Title").trim();
+function buildEmailSafeCore(isAR){
+  const name  = ($("name").value  || (isAR ? "اسمك" : "Your Name")).trim();
+  const title = ($("title").value || (isAR ? "مسمى وظيفتك" : "Your Title")).trim();
   const email = ($("email").value || "").trim();
   const phone = ($("phone").value || "").trim();
   const web   = ($("web").value   || "").trim();
 
-  // Use the currently-visible avatar (upload or preset)
-  const avatarSrc = ($("avatar").style.display !== "none" && $("avatar").src) ? $("avatar").src : "";
+  const avatarEl = isAR ? $("avatarAR") : $("avatarEN");
+  const avatarSrc = (avatarEl.style.display !== "none" && avatarEl.src) ? avatarEl.src : "";
   const initialsText = initials(name || "AA");
 
-  // REQUIRED by you
   const FONT_FAMILY = "Calibri, Arial, sans-serif";
   const BASE_SIZE   = "12pt";
   const LINE_HEIGHT = "16pt";
-
-  // Your preview colors
   const COLOR  = "#02326d";
   const BORDER = `1px solid ${COLOR}`;
   const RADIUS = "6px";
 
   const esc = (s) => (s || "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#39;");
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#39;");
 
-  const safeUrl = (u) => {
-    if(!u) return "";
-    if(/^https?:\/\//i.test(u)) return u;
-    return "https://" + u;
-  };
+  const safeUrl = (u) => !u ? "" : (/^https?:\/\//i.test(u) ? u : "https://" + u);
 
-  const row = (html) => `
+  const contactRow = (html) => `
     <tr>
-      <td style="padding:0;margin:0;font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};">
+      <td style="padding:0;margin:0;font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};
+                 color:${COLOR};text-align:${isAR ? "right" : "left"};direction:${isAR ? "rtl" : "ltr"};">
         ${html}
       </td>
     </tr>`.trim();
 
-  const contactRows = [];
-  if (email) contactRows.push(row(`<a href="mailto:${esc(email)}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(email)}</a>`));
-  if (phone) contactRows.push(row(`<a href="tel:${esc(phone.replace(/\s+/g,""))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(phone)}</a>`));
-  if (web)   contactRows.push(row(`<a href="${esc(safeUrl(web))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(web)}</a>`));
+  const contacts = [];
+  if(email) contacts.push(contactRow(`<a href="mailto:${esc(email)}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(email)}</a>`));
+  if(phone) contacts.push(contactRow(`<a href="tel:${esc(phone.replace(/\s+/g,""))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(phone)}</a>`));
+  if(web)   contacts.push(contactRow(`<a href="${esc(safeUrl(web))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(web)}</a>`));
 
-  // Avatar: prefer embedded/base64 (best for email). If it’s not base64, it may still paste, but some clients block.
   const avatarBlock = avatarSrc
     ? `<img src="${esc(avatarSrc)}" width="150" height="150" alt="avatar"
          style="display:block;width:150px;height:150px;border-radius:${RADIUS};object-fit:cover;border:0;outline:none;text-decoration:none;">`
@@ -352,38 +355,46 @@ function buildEmailSafeSignatureHTML(){
          ${esc(initialsText)}
        </div>`;
 
-  // NOTE: margin-top is unreliable in email. Use a spacer row for your 45px gap.
-  // We’ll approximate your preview with a fixed spacer (e.g., 24px). You can change SPACER_PX to 45, but some clients compress it.
   const SPACER_PX = 24;
 
-  return `
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"
-  style="border-collapse:separate;border-spacing:0;border:${BORDER};border-radius:${RADIUS};
+  const textCell = `
+<td valign="top" style="padding:0;margin:0;font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};
+                       color:${COLOR};text-align:${isAR ? "right" : "left"};direction:${isAR ? "rtl" : "ltr"};">
+  <div style="font-family:${FONT_FAMILY};font-size:14pt;line-height:18pt;font-weight:700;color:${COLOR};">${esc(name)}</div>
+  <div style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};font-weight:400;color:${COLOR};">${esc(title)}</div>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+    <tr><td style="height:${SPACER_PX}px;line-height:${SPACER_PX}px;font-size:0;">&nbsp;</td></tr>
+  </table>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+    ${contacts.join("")}
+  </table>
+</td>`.trim();
+
+  const avatarCell = `<td valign="top" style="padding:0;margin:0;" align="right">${avatarBlock}</td>`;
+  const gapCell = `<td width="14" style="width:14px;font-size:0;line-height:0;">&nbsp;</td>`;
+
+  // ✅ Always stable: outer table forced LTR, and Arabic uses (text then avatar) => avatar RIGHT
+  const innerRow = isAR
+    ? `${textCell}${gapCell}${avatarCell}`  // AR: avatar right
+    : `${avatarCell}${gapCell}${textCell}`; // EN: avatar left
+
+  const FRAME_W = 600;      // match your preview width
+  const PAD = 6;
+  const INNER_W = FRAME_W - (PAD*2); // 600 - 12 = 588
+
+return `
+<table dir="ltr" role="presentation" cellpadding="0" cellspacing="0" border="0" width="${FRAME_W}"
+  style="width:${FRAME_W}px;max-width:${FRAME_W}px;direction:ltr;border-collapse:separate;border-spacing:0;
+         border:${BORDER};border-radius:${RADIUS};
          font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};">
   <tr>
-    <td style="padding:6px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+    <td style="padding:${PAD}px;width:${FRAME_W}px;max-width:${FRAME_W}px;">
+      <table dir="ltr" role="presentation" cellpadding="0" cellspacing="0" border="0" width="${INNER_W}"
+        style="width:${INNER_W}px;max-width:${INNER_W}px;direction:ltr;border-collapse:collapse;">
         <tr>
-          <td valign="top" style="padding:0;margin:0;">
-            ${avatarBlock}
-          </td>
-          <td width="14" style="width:14px;font-size:0;line-height:0;">&nbsp;</td>
-          <td valign="top" style="padding:0;margin:0;font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};">
-            <div style="font-family:${FONT_FAMILY};font-size:14pt;line-height:18pt;font-weight:700;color:${COLOR};">
-              ${esc(name)}
-            </div>
-            <div style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};font-weight:400;color:${COLOR};">
-              ${esc(title)}
-            </div>
-
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
-              <tr><td style="height:${SPACER_PX}px;line-height:${SPACER_PX}px;font-size:0;">&nbsp;</td></tr>
-            </table>
-
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
-              ${contactRows.join("")}
-            </table>
-          </td>
+          ${innerRow}
         </tr>
       </table>
     </td>
@@ -391,9 +402,26 @@ function buildEmailSafeSignatureHTML(){
 </table>`.trim();
 }
 
-/*------*/
+async function copyHTML(){
+  const html = (currentLang === "AR")
+    ? buildEmailSafeSignatureHTML_AR()
+    : buildEmailSafeSignatureHTML_EN();
 
-// ===== Default avatars (edit filenames to match yours) =====
+  const plain = [
+    $("name").value, $("title").value, $("email").value, $("phone").value, $("web").value
+  ].filter(Boolean).join(" | ") || "Signature";
+
+  await navigator.clipboard.write([
+    new ClipboardItem({
+      "text/html": new Blob([html], { type: "text/html" }),
+      "text/plain": new Blob([plain], { type: "text/plain" })
+    })
+  ]);
+
+  alert(`Copied (${currentLang === "AR" ? "Arabic" : "English"} — Calibri 12pt email-safe).`);
+}
+
+/* ---------- Default avatars (radio presets) ---------- */
 const DEFAULT_AVATARS = [
   "./images/darkemb.png",
   "./images/darkfull.png",
@@ -401,7 +429,6 @@ const DEFAULT_AVATARS = [
   "./images/lightfull.png"
 ];
 
-// Convert an image URL to base64 data URL (so copy/paste email works)
 async function urlToDataURL(url){
   const res = await fetch(url, { cache: "no-store" });
   const blob = await res.blob();
@@ -413,29 +440,10 @@ async function urlToDataURL(url){
   });
 }
 
-function applyAvatarDataUrl(dataUrl){
-  $("avatar").src = dataUrl;
-  $("avatar").style.display = "block";
-  $("initials").style.display = "none";
-
-  document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
-}
-
-// Reset to initials
-function resetAvatar(){
-  $("avatar").src = "";
-  $("avatar").style.display = "none";
-  $("initials").style.display = "flex";
-  // also uncheck radios
-  document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
-}
-
-// Render radio choices
 async function initDefaultAvatars(){
   const wrap = $("avatarChoices");
   wrap.innerHTML = "";
 
-  // Preload + convert to data URLs once (fast after first load)
   const dataUrls = await Promise.all(DEFAULT_AVATARS.map(urlToDataURL));
 
   dataUrls.forEach((dataUrl, idx) => {
@@ -451,23 +459,16 @@ async function initDefaultAvatars(){
       <span>Avatar ${idx+1}</span>
     `;
 
-    // When selected, apply avatar
     label.querySelector("input").addEventListener("change", () => {
-      applyAvatarDataUrl(dataUrl);
+      applyAvatarToBoth(dataUrl);
     });
 
     wrap.appendChild(label);
   });
 }
 
-// Call this once on page load
 initDefaultAvatars().catch(console.error);
-
-/*----*/
-
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 </body>
 </html>
