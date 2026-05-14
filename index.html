@@ -18,20 +18,20 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 .langbar button{padding:8px 12px;border-radius:6px;border:1px solid #ddd;background:#fff}
 .langbar .primary{border:none}
 
-/* ✅ Use GRID instead of FLEX to guarantee column placement */
 .sig{
   display:grid;
-  grid-template-columns:150px 1fr; /* EN: avatar left */
+  grid-template-columns:150px 1fr;
   gap:14px;
   align-items:center;
   padding:6px;
   border:1px solid #02326d;
   border-radius:6px;
   width:600px;
+  background:#ffffff;
 }
 
 #sigAR{
-  grid-template-columns:1fr 150px; /* AR: avatar right */
+  grid-template-columns:1fr 150px;
   text-align:right;
 }
 
@@ -51,12 +51,30 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 .links a{color:#02326d;text-decoration:none;display:inline;overflow-wrap:anywhere}
 #sigAR .links{text-align:right;}
 
+.signature-footer{
+  grid-column:1 / -1;
+  width:88%;
+  margin:14px auto 0;
+  padding-top:10px;
+  border-top:1px solid rgba(2,50,109,.22);
+  text-align:center;
+  color:rgba(2,50,109,.68);
+  font-family:'PingAR', Arial, sans-serif;
+  font-size:8.5px;
+  line-height:1.55;
+  font-weight:500;
+  letter-spacing:.05px;
+}
+
+.signature-footer div{
+  margin-bottom:1px;
+}
+
 .avatar-choices{display:flex;gap:10px;flex-wrap:wrap;}
 .avatar-choice{display:flex;align-items:center;gap:8px;border:1px solid #ddd;border-radius:6px;padding:6px 8px;cursor:pointer;user-select:none;}
 .avatar-choice input{width:auto;margin:0;}
 .avatar-thumb{width:42px;height:42px;border-radius:6px;object-fit:cover;display:block;border:1px solid #eee;}
 
-/* ---------- Cropper UI ---------- */
 .cropModal{
   position:fixed; inset:0;
   background:rgba(0,0,0,.55);
@@ -158,7 +176,6 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
       <button type="button" id="btnAR">Arabic</button>
     </div>
 
-    <!-- English (avatar LEFT by grid columns) -->
     <div id="sigEN" class="sig">
       <div class="avatarwrap">
         <img id="avatarEN" class="avatar" style="display:none" alt="avatar">
@@ -170,9 +187,15 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
         <div id="ptitleEN" class="title">Your Title</div>
         <div id="plinksEN" class="links"></div>
       </div>
+
+      <div class="signature-footer">
+        <div>Alraedah Finance Company | Closed JSC | Capital SAR 150M</div>
+        <div>C.R. 1010314982 | Licensed by SAMA No. 43/201602/أش</div>
+        <div>Laysen Valley, Building 9, King Khalid Road, Umm Al Hammam Al Gharbi, Riyadh 12329, Saudi Arabia</div>
+        <div>8001249000 | www.alraedah.sa</div>
+      </div>
     </div>
 
-    <!-- Arabic (DOM order swapped => avatar RIGHT always) -->
     <div id="sigAR" class="sig" style="display:none">
       <div class="textwrap">
         <div id="pnameAR" class="name">اسمك</div>
@@ -184,13 +207,19 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
         <img id="avatarAR" class="avatar" style="display:none" alt="avatar">
         <div id="initialsAR" class="initials">AA</div>
       </div>
+
+      <div class="signature-footer">
+        <div>Alraedah Finance Company | Closed JSC | Capital SAR 150M</div>
+        <div>C.R. 1010314982 | Licensed by SAMA No. 43/201602/أش</div>
+        <div>Laysen Valley, Building 9, King Khalid Road, Umm Al Hammam Al Gharbi, Riyadh 12329, Saudi Arabia</div>
+        <div>8001249000 | www.alraedah.sa</div>
+      </div>
     </div>
 
   </div>
 
 </div>
 
-<!-- ---------- Cropper Modal ---------- -->
 <div class="cropModal" id="cropModal" aria-hidden="true">
   <div class="cropBox">
     <div class="cropTop">
@@ -213,7 +242,7 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
     </div>
 
     <div class="cropHint">
-      Drag the image to reposition. Use mouse wheel / trackpad to zoom. Output is 256×256 (good for email copy + PNG).
+      Drag the image to reposition. Use mouse wheel / trackpad to zoom. Output is 256×256.
     </div>
 
     <div class="cropBtns">
@@ -229,7 +258,6 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 const $ = id => document.getElementById(id);
 let currentLang = "EN";
 
-/* ---------- Language toggle ---------- */
 function setLang(lang){
   currentLang = lang;
   $("sigEN").style.display = (lang === "EN") ? "grid" : "none";
@@ -241,7 +269,6 @@ $("btnEN").addEventListener("click", () => setLang("EN"));
 $("btnAR").addEventListener("click", () => setLang("AR"));
 setLang("EN");
 
-/* ---------- Helpers ---------- */
 function initials(n){
   let p = (n || "").trim().split(" ");
   if(!p[0]) return "AA";
@@ -255,12 +282,10 @@ function update(){
   const phone = $("phone").value.trim();
   const web   = $("web").value.trim();
 
-  // EN
   $("pnameEN").textContent = name || "Your Name";
   $("ptitleEN").textContent = title || "Your Title";
   $("initialsEN").textContent = initials(name || "AA");
 
-  // AR
   $("pnameAR").textContent = name || "اسمك";
   $("ptitleAR").textContent = title || "مسمى وظيفتك";
   $("initialsAR").textContent = initials(name || "AA");
@@ -279,7 +304,6 @@ function update(){
 });
 update();
 
-/* ---------- Avatar apply/reset (BOTH) ---------- */
 function applyAvatarToBoth(dataUrl){
   $("avatarEN").src = dataUrl;
   $("avatarEN").style.display = "block";
@@ -302,9 +326,6 @@ function resetAvatar(){
   document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
 }
 
-/* ============================================================
-   CROPPER (no external libs): square crop, drag + zoom + rotate
-   ============================================================ */
 const cropModal = $("cropModal");
 const cropCanvas = $("cropCanvas");
 const cctx = cropCanvas.getContext("2d");
@@ -313,41 +334,34 @@ let cropImg = new Image();
 let cropState = {
   imgLoaded:false,
   scale:1,
-  rotate:0,     // radians
+  rotate:0,
   mirror:false,
-  cx:0, cy:0,   // image center position in canvas coords
+  cx:0, cy:0,
   dragging:false,
   lastX:0, lastY:0
 };
 
-// fixed output and view
-const CROP_OUTPUT = 256;     // final avatar size (email friendly)
-const VIEW_SIZE = 800;       // internal canvas pixel size for crisp dragging
+const CROP_OUTPUT = 256;
+const VIEW_SIZE = 800;
 
 function openCropper(dataUrl){
   cropModal.style.display = "flex";
   cropModal.setAttribute("aria-hidden","false");
 
-  // size the canvas for crispness (independent from CSS size)
   cropCanvas.width = VIEW_SIZE;
   cropCanvas.height = VIEW_SIZE;
 
   cropImg = new Image();
   cropImg.onload = () => {
     cropState.imgLoaded = true;
-
-    // start centered
     cropState.scale = 1;
     cropState.rotate = 0;
     cropState.mirror = false;
-
     cropState.cx = cropCanvas.width/2;
     cropState.cy = cropCanvas.height/2;
 
-    // fit image so it covers the crop square initially
     const minSide = Math.min(cropImg.width, cropImg.height);
-    const coverScale = CROP_OUTPUT / minSide; // base cover at output size
-    // Because our view canvas is bigger, scale up to match view
+    const coverScale = CROP_OUTPUT / minSide;
     const viewCover = (VIEW_SIZE / CROP_OUTPUT) * coverScale;
     cropState.scale = viewCover;
 
@@ -388,13 +402,11 @@ function drawCropper(){
   const w = cropCanvas.width, h = cropCanvas.height;
   cctx.clearRect(0,0,w,h);
 
-  // background
   cctx.fillStyle = "#f5f5f5";
   cctx.fillRect(0,0,w,h);
 
   if(!cropState.imgLoaded) return;
 
-  // draw image with transforms
   cctx.save();
   cctx.translate(cropState.cx, cropState.cy);
   cctx.rotate(cropState.rotate);
@@ -404,44 +416,36 @@ function drawCropper(){
   cctx.drawImage(cropImg, -cropImg.width/2, -cropImg.height/2);
   cctx.restore();
 
-  // overlay + square crop window (center)
-  const cropSize = CROP_OUTPUT * (VIEW_SIZE / CROP_OUTPUT); // equals VIEW_SIZE? no, we want actual crop window size in view:
-  const windowSize = Math.min(w,h) * 0.62; // nice UI window
+  const windowSize = Math.min(w,h) * 0.62;
   const x = (w-windowSize)/2;
   const y = (h-windowSize)/2;
 
-  // dark overlay
   cctx.save();
   cctx.fillStyle = "rgba(0,0,0,0.45)";
   cctx.fillRect(0,0,w,h);
 
-  // cut the hole
   cctx.globalCompositeOperation = "destination-out";
   cctx.fillRect(x,y,windowSize,windowSize);
   cctx.restore();
 
-  // border
   cctx.save();
   cctx.strokeStyle = "#ffffff";
   cctx.lineWidth = 2;
   cctx.strokeRect(x+1,y+1,windowSize-2,windowSize-2);
   cctx.restore();
 
-  // guide text (optional)
-  // cctx.fillStyle="#fff"; cctx.font="14px Arial"; cctx.fillText("Drag to position", x, y-10);
-
-  // store window rect for extraction
   cropState.window = {x,y,size:windowSize};
 }
 
-/* drag controls */
 cropCanvas.addEventListener("mousedown", (e)=>{
   if(!cropState.imgLoaded) return;
   cropState.dragging = true;
   cropState.lastX = e.offsetX;
   cropState.lastY = e.offsetY;
 });
+
 window.addEventListener("mouseup", ()=> cropState.dragging = false);
+
 cropCanvas.addEventListener("mousemove", (e)=>{
   if(!cropState.dragging) return;
   const dx = e.offsetX - cropState.lastX;
@@ -453,7 +457,6 @@ cropCanvas.addEventListener("mousemove", (e)=>{
   drawCropper();
 });
 
-/* zoom wheel */
 cropCanvas.addEventListener("wheel", (e)=>{
   if(!cropState.imgLoaded) return;
   e.preventDefault();
@@ -464,45 +467,40 @@ cropCanvas.addEventListener("wheel", (e)=>{
   drawCropper();
 }, {passive:false});
 
-/* sliders */
 $("zoomRange").addEventListener("input", (e)=>{
   cropState.scale = parseFloat(e.target.value);
   drawCropper();
 });
+
 $("rotRange").addEventListener("input", (e)=>{
   const deg = parseFloat(e.target.value);
   cropState.rotate = deg * Math.PI / 180;
   drawCropper();
 });
+
 $("mirrorX").addEventListener("change", (e)=>{
   cropState.mirror = e.target.checked;
   drawCropper();
 });
 
-/* extract cropped square to 256x256 dataURL */
 function applyCroppedAvatar(){
   if(!cropState.imgLoaded) return;
 
-  // create output canvas
   const out = document.createElement("canvas");
   out.width = CROP_OUTPUT;
   out.height = CROP_OUTPUT;
   const octx = out.getContext("2d");
 
-  // compute mapping: take crop window from view canvas and scale into output
   const {x,y,size} = cropState.window;
 
-  // First, render current view to an offscreen canvas (exactly as cropCanvas drawn, but without overlay)
   const raw = document.createElement("canvas");
   raw.width = cropCanvas.width;
   raw.height = cropCanvas.height;
   const rctx = raw.getContext("2d");
 
-  // draw background (optional white)
   rctx.fillStyle = "#ffffff";
   rctx.fillRect(0,0,raw.width,raw.height);
 
-  // draw transformed image
   rctx.save();
   rctx.translate(cropState.cx, cropState.cy);
   rctx.rotate(cropState.rotate);
@@ -512,7 +510,6 @@ function applyCroppedAvatar(){
   rctx.drawImage(cropImg, -cropImg.width/2, -cropImg.height/2);
   rctx.restore();
 
-  // copy the crop window area into output canvas
   octx.imageSmoothingEnabled = true;
   octx.imageSmoothingQuality = "high";
   octx.drawImage(raw, x, y, size, size, 0, 0, CROP_OUTPUT, CROP_OUTPUT);
@@ -520,13 +517,11 @@ function applyCroppedAvatar(){
   const dataUrl = out.toDataURL("image/jpeg", 0.9);
   applyAvatarToBoth(dataUrl);
 
-  // upload overrides preset selection
   document.querySelectorAll('input[name="presetAvatar"]').forEach(r => r.checked = false);
 
   closeCropper();
 }
 
-/* ---------- Upload avatar => open cropper ---------- */
 $("avatarUpload").onchange = e => {
   let file = e.target.files && e.target.files[0];
   if(!file) return;
@@ -537,20 +532,26 @@ $("avatarUpload").onchange = e => {
   };
   reader.readAsDataURL(file);
 
-  // allow re-upload same file triggers again
   e.target.value = "";
 };
 
-/* ---------- Copy TEXT ---------- */
 function copyText(){
   let t = [
-    $("name").value, $("title").value, $("phone").value, $("email").value, $("web").value
+    $("name").value,
+    $("title").value,
+    $("phone").value,
+    $("email").value,
+    $("web").value,
+    "Alraedah Finance Company | Closed JSC | Capital SAR 150M",
+    "C.R. 1010314982 | Licensed by SAMA No. 43/201602/أش",
+    "Laysen Valley, Building 9, King Khalid Road, Umm Al Hammam Al Gharbi, Riyadh 12329, Saudi Arabia",
+    "8001249000 | www.alraedah.sa"
   ].filter(Boolean).join(" | ");
+
   navigator.clipboard.writeText(t);
   alert("Text copied");
 }
 
-/* ---------- PNG export (selected language) ---------- */
 async function downloadPNG(){
   try{
     if (document.fonts) await document.fonts.ready;
@@ -588,7 +589,6 @@ async function downloadPNG(){
   }
 }
 
-/* ---------- Email-safe builders (Calibri 12pt) ---------- */
 function buildEmailSafeSignatureHTML_EN(){ return buildEmailSafeCore(false); }
 function buildEmailSafeSignatureHTML_AR(){ return buildEmailSafeCore(true); }
 
@@ -627,7 +627,7 @@ function buildEmailSafeCore(isAR){
   const contacts = [];
   if(email) contacts.push(contactRow(`<a href="mailto:${esc(email)}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(email)}</a>`));
   if(phone) contacts.push(contactRow(`<a href="tel:${esc(phone.replace(/\s+/g,""))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(phone)}</a>`));
-  if(web)   contacts.push(contactRow(`<a href="${esc(safeUrl(web))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(web)}</a>`));
+  if(web) contacts.push(contactRow(`<a href="${esc(safeUrl(web))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(web)}</a>`));
 
   const avatarBlock = avatarSrc
     ? `<img src="${esc(avatarSrc)}" width="150" height="150" alt="avatar"
@@ -658,12 +658,31 @@ function buildEmailSafeCore(isAR){
   const gapCell = `<td width="14" style="width:14px;font-size:0;line-height:0;">&nbsp;</td>`;
 
   const innerRow = isAR
-    ? `${textCell}${gapCell}${avatarCell}`   // AR: avatar right
-    : `${avatarCell}${gapCell}${textCell}`;  // EN: avatar left
+    ? `${textCell}${gapCell}${avatarCell}`
+    : `${avatarCell}${gapCell}${textCell}`;
 
   const FRAME_W = 600;
   const PAD = 6;
   const INNER_W = FRAME_W - (PAD*2);
+
+  const footerHTML = `
+  <tr>
+    <td colspan="3" style="padding:10px 0 0 0;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+        style="border-collapse:collapse;border-top:1px solid #d6dce8;">
+        <tr>
+          <td align="center"
+            style="padding-top:8px;font-family:${FONT_FAMILY};font-size:7.5pt;line-height:11pt;
+                   color:#6f7fa3;text-align:center;font-weight:400;">
+            <div>Alraedah Finance Company | Closed JSC | Capital SAR 150M</div>
+            <div>C.R. 1010314982 | Licensed by SAMA No. 43/201602/أش</div>
+            <div>Laysen Valley, Building 9, King Khalid Road, Umm Al Hammam Al Gharbi, Riyadh 12329, Saudi Arabia</div>
+            <div>8001249000 | www.alraedah.sa</div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`.trim();
 
   return `
 <table dir="ltr" role="presentation" cellpadding="0" cellspacing="0" border="0" width="${FRAME_W}"
@@ -677,6 +696,7 @@ function buildEmailSafeCore(isAR){
         <tr>
           ${innerRow}
         </tr>
+        ${footerHTML}
       </table>
     </td>
   </tr>
@@ -689,7 +709,11 @@ async function copyHTML(){
     : buildEmailSafeSignatureHTML_EN();
 
   const plain = [
-    $("name").value, $("title").value, $("email").value, $("phone").value, $("web").value
+    $("name").value,
+    $("title").value,
+    $("email").value,
+    $("phone").value,
+    $("web").value
   ].filter(Boolean).join(" | ") || "Signature";
 
   await navigator.clipboard.write([
@@ -702,7 +726,6 @@ async function copyHTML(){
   alert(`Copied (${currentLang === "AR" ? "Arabic" : "English"} — Calibri 12pt email-safe).`);
 }
 
-/* ---------- Default avatars (radio presets) ---------- */
 const DEFAULT_AVATARS = [
   "./images/darkemb.png",
   "./images/darkfull.png",
