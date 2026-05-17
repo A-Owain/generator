@@ -20,7 +20,7 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 
 .sig{
   display:grid;
-  grid-template-columns:150px 1fr;
+  grid-template-columns:131px 1fr;
   gap:14px;
   align-items:center;
   padding:6px;
@@ -31,16 +31,16 @@ button{padding:10px 14px;border-radius:6px;border:1px solid #ddd;background:whit
 }
 
 #sigAR{
-  grid-template-columns:1fr 150px;
+  grid-template-columns:1fr 131px;
   text-align:right;
 }
 
 .avatarwrap{
-  width:150px;height:150px;
+  width:131px;height:131px;
   display:flex;align-items:center;justify-content:center;
 }
-.avatar{width:150px;height:150px;border-radius:6px;object-fit:cover;background:#eee;display:block}
-.initials{width:150px;height:150px;border-radius:6px;background:#02326d;color:white;display:flex;align-items:center;justify-content:center;font-weight:700}
+.avatar{width:131px;height:131px;border-radius:6px;object-fit:cover;background:#eee;display:block}
+.initials{width:131px;height:131px;border-radius:6px;background:#02326d;color:white;display:flex;align-items:center;justify-content:center;font-weight:700}
 
 .textwrap{min-width:0;}
 #sigAR .textwrap{direction:rtl;text-align:right;}
@@ -625,9 +625,9 @@ function buildEmailSafeCore(isAR){
   if(web) contacts.push(contactRow(`<a href="${esc(safeUrl(web))}" style="font-family:${FONT_FAMILY};font-size:${BASE_SIZE};line-height:${LINE_HEIGHT};color:${COLOR};text-decoration:none;">${esc(web)}</a>`));
 
   const avatarBlock = avatarSrc
-    ? `<img src="${esc(avatarSrc)}" width="150" height="150" alt="avatar"
-         style="display:block;width:150px;height:150px;border-radius:${RADIUS};object-fit:cover;border:0;outline:none;text-decoration:none;">`
-    : `<div style="width:150px;height:150px;border-radius:${RADIUS};background:${COLOR};color:#ffffff;
+    ? `<img src="${esc(avatarSrc)}" width="131" height="131" alt="avatar"
+         style="display:block;width:131px;height:131px;border-radius:${RADIUS};object-fit:cover;border:0;outline:none;text-decoration:none;">`
+    : `<div style="width:131px;height:131px;border-radius:${RADIUS};background:${COLOR};color:#ffffff;
                   font-family:${FONT_FAMILY};font-size:20pt;line-height:150px;text-align:center;font-weight:700;">
          ${esc(initialsText)}
        </div>`;
